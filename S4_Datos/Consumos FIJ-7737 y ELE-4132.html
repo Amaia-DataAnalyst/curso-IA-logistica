@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Consumos FIJ-7737 y ELE-4132</title>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f6f6f2;--fg:#1b2428;--mut:#5d6a70;--line:#d9ddd8;--card:#fff;--c1:#1f6f8b;--c2:#c47a1c;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#13191c;--fg:#e7ecee;--mut:#93a1a7;--line:#2b363b;--card:#1a2226;--c1:#5fb4d1;--c2:#e6a04a}}
+:root[data-theme="dark"]{--bg:#13191c;--fg:#e7ecee;--mut:#93a1a7;--line:#2b363b;--card:#1a2226;--c1:#5fb4d1;--c2:#e6a04a}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 "Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:980px;margin:0 auto;padding:24px 18px 40px}
+h1{font-size:1.5rem;line-height:1.25;margin:0 0 4px;font-weight:600}
+.sub{color:var(--mut);margin:0 0 20px;font-size:.95rem}
+.bar{display:flex;flex-wrap:wrap;gap:14px 22px;align-items:center;margin-bottom:14px}
+.grp{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--card)}
+.grp button{border:0;background:none;color:var(--mut);font:inherit;font-size:.9rem;padding:7px 14px;cursor:pointer}
+.grp button+button{border-left:1px solid var(--line)}
+.grp button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+.chips{display:flex;gap:10px;flex-wrap:wrap}
+.chip{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--card);color:var(--fg);font:inherit;font-size:.9rem;padding:6px 12px;border-radius:999px;cursor:pointer}
+.chip i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.chip[aria-pressed="false"]{opacity:.45}
+.chip[aria-pressed="false"] i{background:transparent!important;outline:2px solid var(--mut);outline-offset:-2px}
+button:focus-visible{outline:2px solid var(--c1);outline-offset:2px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px}
+.wrap{position:relative;height:380px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:14px}
+.st{border-left:4px solid;padding:2px 0 2px 12px}
+.st b{display:block;font-weight:600}
+.st span{color:var(--mut);font-size:.88rem}
+@media (max-width:560px){.wrap{height:300px}}
+</style>
+</head>
+<body>
+<main>
+<h1>Evolución mensual de FIJ-7737 y ELE-4132</h1>
+<p class="sub">Unidades efectivamente servidas, de septiembre de 2024 a agosto de 2026.</p>
+<div class="bar">
+  <div class="grp" id="gMetric" role="group" aria-label="Métrica">
+    <button data-v="imp" aria-pressed="true">Importe (€)</button>
+    <button data-v="qty" aria-pressed="false">Unidades</button>
+  </div>
+  <div class="grp" id="gType" role="group" aria-label="Tipo de gráfico">
+    <button data-v="bar" aria-pressed="true">Columnas</button>
+    <button data-v="line" aria-pressed="false">Líneas</button>
+  </div>
+  <div class="grp" id="gRange" role="group" aria-label="Periodo">
+    <button data-v="24" aria-pressed="true">24 meses</button>
+    <button data-v="12" aria-pressed="false">Últimos 12</button>
+  </div>
+</div>
+<div class="chips" id="chips" style="margin-bottom:14px"></div>
+<div class="panel"><div class="wrap"><canvas id="cv" role="img" aria-label="Gráfico de consumo mensual por referencia"></canvas></div></div>
+<div class="stats" id="stats"></div>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+const MONTHS=[];for(let i=0;i<24;i++){const y=2024+Math.floor((8+i)/12),m=((8+i)%12)+1;MONTHS.push(y+"-"+String(m).padStart(2,"0"))}
+const SKU={
+ "FIJ-7737":{k:"--c1",desc:"Tornillo DIN 933 M20x50 inox A4, caja de 200 u",
+  imp:[74.55,0,114.31,49.7,114.31,99.4,89.46,0,44.73,0,119.28,104.37,0,89.46,0,0,0,0,79.52,54.67,0,0,114.31,114.31],
+  qty:[15,0,23,10,23,20,18,0,9,0,24,21,0,18,0,0,0,0,16,11,0,0,23,23]},
+ "ELE-4132":{k:"--c2",desc:"Contactor tripolar 50 A bobina 110 V AC",
+  imp:[0,0,0,0,0,0,0,0,0,0,350.9,414.7,0,446.6,0,95.7,382.8,127.6,350.9,382.8,510.4,478.5,414.7,478.5],
+  qty:[0,0,0,0,0,0,0,0,0,0,11,13,0,14,0,3,12,4,11,12,16,15,13,15]}
+};
+const S={metric:"imp",type:"bar",range:24,on:{"FIJ-7737":true,"ELE-4132":true}};
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const fmt=(v,m)=>m==="imp"?v.toLocaleString("es-ES",{minimumFractionDigits:2,maximumFractionDigits:2})+" €":v.toLocaleString("es-ES")+" u";
+let chart;
+function group(id,key,cast){
+  document.getElementById(id).addEventListener("click",e=>{
+    const b=e.target.closest("button");if(!b)return;
+    S[key]=cast(b.dataset.v);
+    [...b.parentNode.children].forEach(x=>x.setAttribute("aria-pressed",x===b?"true":"false"));
+    render();
+  });
+}
+group("gMetric","metric",v=>v);group("gType","type",v=>v);group("gRange","range",Number);
+const chips=document.getElementById("chips");
+Object.keys(SKU).forEach(id=>{
+  const b=document.createElement("button");b.className="chip";b.setAttribute("aria-pressed","true");
+  b.innerHTML='<i></i>'+id;b.title=SKU[id].desc;
+  b.addEventListener("click",()=>{S.on[id]=!S.on[id];b.setAttribute("aria-pressed",S.on[id]);render()});
+  b.dataset.id=id;chips.appendChild(b);
+});
+function render(){
+  const n=S.range,labels=MONTHS.slice(24-n);
+  const ids=Object.keys(SKU).filter(i=>S.on[i]);
+  const text=css("--mut"),grid=css("--line");
+  chips.querySelectorAll(".chip").forEach(b=>b.querySelector("i").style.background=css(SKU[b.dataset.id].k));
+  const ds=ids.map(id=>{const c=css(SKU[id].k);return{label:id,data:SKU[id][S.metric].slice(24-n),backgroundColor:c,borderColor:c,borderWidth:S.type==="line"?2.5:0,borderRadius:S.type==="bar"?2:0,tension:0,pointRadius:S.type==="line"?3:0,pointHoverRadius:5}});
+  if(chart)chart.destroy();
+  chart=new Chart(document.getElementById("cv"),{type:S.type,data:{labels,datasets:ds},options:{
+    responsive:true,maintainAspectRatio:false,animation:{duration:250},
+    interaction:{mode:"index",intersect:false},
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>" "+c.dataset.label+": "+fmt(c.parsed.y,S.metric)}}},
+    scales:{
+      x:{title:{display:true,text:"Año-mes",color:text},ticks:{color:text,maxRotation:60,autoSkip:true},grid:{display:false}},
+      y:{beginAtZero:true,title:{display:true,text:S.metric==="imp"?"Importe (€)":"Unidades",color:text},ticks:{color:text},grid:{color:grid}}
+    }}});
+  const st=document.getElementById("stats");
+  st.innerHTML=ids.length?"":'<span style="color:var(--mut)">Activa al menos una referencia para ver el gráfico.</span>';
+  ids.forEach(id=>{
+    const v=SKU[id][S.metric].slice(24-n),tot=v.reduce((a,b)=>a+b,0),act=v.filter(x=>x>0).length;
+    const d=document.createElement("div");d.className="st";d.style.borderColor=css(SKU[id].k);
+    d.innerHTML="<b>"+id+"</b><span>"+SKU[id].desc+"</span><br><span>Total "+fmt(tot,S.metric)+" · media "+fmt(tot/n,S.metric)+"/mes · "+act+" de "+n+" meses con consumo</span>";
+    st.appendChild(d);
+  });
+}
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change",render);
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,1 @@
+Haz un gráfico interactivo de columnas de consumos con el excel de consumos (consumos_24meses.xlsx) para ver cómo han evolucionado los SKUs FIJ-7737 y ELE-4132. Quiero año y mes en el eje X y importe en el eje y.
