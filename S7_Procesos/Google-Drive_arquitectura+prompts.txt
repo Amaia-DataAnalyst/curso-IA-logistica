@@ -1,0 +1,113 @@
+S7_DEMO_GARAIA/
+│
+├── 01_CONTEXTO/
+│   └── dosier_garaia.pdf (s1)
+│
+├── 02_REGLAS/
+│   ├── procedimiento_incidencias.pdf (S6)
+│   └── politica_compensaciones.pdf (S2)
+│
+├── 03_EJEMPLOS/
+│   └── bandeja_lunes.txt (S2)
+│
+├── 04_MODELO_DATOS/
+│   └── A4_incidencias_destino.csv/xlsx (S2)
+│
+└── 05_SALIDA/
+    └── Incidencias_GARAIA_demo   [Google Sheet]
+
+
+
+El sentido de cada pieza:
+
+1. dosier_garaia.pdf: Le da a Claude contexto sobre empresa, áreas, operativa, etc. No gobierna la automatización.
+
+2. procedimiento_incidencias.pdf: Es la principal fuente de reglas: qué es una incidencia, qué registrar, qué escalar, quién interviene.
+
+3. politica_compensaciones.pdf: Introduce límites. Por ejemplo, podemos diseñar el sistema para que nunca decida una compensación, sino que marque el caso como REQUIERE_REVISIÓN.
+
+4. bandeja_lunes.txt: Te da casos ya conocidos para construir emails sintéticos de prueba.
+
+5. A4_incidencias_destino.xlsx/csv: Es importantísimo porque recupera S2: define cómo estructurábamos una incidencia.
+
+6. Incidencias_GARAIA_demo: No es un documento que debáis subir, sino un documento que se creará al final del proceso y que puede descargarse como Excel o CSV.
+	Cabeceras del documento de salida: | ID | Fecha | Remitente | Asunto | Tipo | Pedido | Cliente | Resumen | Estado | Responsable | Necesita revisión | Gmail | Procesado 
+
+
+	==> ¿para qué sirve este Sheet? No solo para guardar cosas, sino para:
+		- ver incidencias abiertas;
+		- ordenar por antigüedad;
+		- saber qué responsable tiene cada caso;
+		- localizar casos que llevan >48 h sin cambio;
+		- contar incidencias por tipo;
+		- detectar qué clientes acumulan más;
+		- conocer tiempos de resolución;
+		- generar un pequeño dashboard;
+		- alimentar análisis posteriores.
+
+		==> El output de una automatización se convierte en el input de análisis posteriores.
+
+
+
+
+====================================================
+
+
+### PROMPT 1 (Claude):
+
+Estoy diseñando una automatización sencilla para GARAIA Logistika.
+
+Tienes:
+- un dosier de contexto de empresa;
+- el procedimiento de incidencias;
+- la política de compensaciones;
+- ejemplos de mensajes;
+- la estructura del registro de incidencias.
+
+Quiero automatizar solamente la recepción y preparación inicial de incidencias por email.
+
+NO escribas código todavía.
+
+Propón una arquitectura que indique:
+
+1. qué emails deberían entrar en el proceso;
+2. qué campos debemos extraer;
+3. cómo clasificarlos;
+4. qué información debe registrarse en Google Sheets;
+5. qué casos pueden prepararse automáticamente;
+6. qué casos deben escalar a una persona;
+7. qué decisiones NO debe tomar automáticamente;
+8. qué etiquetas/estados necesitamos;
+9. qué errores hay que registrar.
+
+Respeta las reglas de los documentos adjuntos.
+Si alguna regla no está documentada, indícalo.
+
+
+
+### PROMPT 2 (Claude; para crear código para App Script):
+
+Convierte esta arquitectura en una demo segura con Google Apps Script.
+
+El script debe:
+
+- buscar emails no procesados relacionados con incidencias;
+- permitir detectar por asunto, remitente y algunas palabras clave;
+- crear una fila en la Google Sheet Incidencias_GARAIA_demo;
+- respetar las columnas existentes del modelo A4_incidencias_destino;
+- asignar tipo y estado inicial;
+- guardar enlace al hilo de Gmail;
+- crear un borrador de respuesta si procede;
+- NO enviar ningún email;
+- NO decidir compensaciones;
+- aplicar una etiqueta S7_PROCESADO;
+- registrar errores;
+- evitar procesar dos veces el mismo hilo.
+
+Antes de escribir código:
+1. explica la arquitectura;
+2. enumera permisos necesarios;
+3. señala riesgos;
+4. indica qué queda bajo supervisión humana.
+
+Después escribe el Apps Script comentado.
