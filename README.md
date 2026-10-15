@@ -32,7 +32,7 @@ La estructura del repositorio irá creciendo conforme avance el curso:
 - `S5_Predecir_Optimizar/` — predicción, escenarios y optimización.
 - `S6_Asistentes/` — asistentes basados en documentos y conocimiento.
 - `S7_Procesos/` — mapeo, rediseño y automatización de procesos.
-- `S8_Decidir/` — criterios transversales para decidir con IA: evidencia, límites, riesgos y siguientes pasos.
+- `S8_Decidir/` — criterios transversales para decidir con IA: evidencia, límites, riesgos y siguientes pasos; recapitulación + banco de prompts.
 
 No todas las carpetas o archivos estarán disponibles desde el primer día. Algunos materiales se publicarán únicamente cuando ya hayan sido utilizados en clase para no anticipar la solución de los ejercicios.
 
